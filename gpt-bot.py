@@ -1,14 +1,12 @@
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler,MessageHandler, ContextTypes, filters
 import os
+from queue import Queue
+from model_thread import ModelThread
 
-from gpt4all import GPT4All
-
-model = None
-
-# Define a few command handlers. These usually take the two arguments update and
-
-# context.
+model_thread = ModelThread()
+prompt_queue=Queue()
+response_queue=Queue()
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
@@ -20,21 +18,22 @@ def is_usr_verified(update: Update):
     user = update.effective_user
     if user.id == int(os.environ['USER_ID']):
         print("User verified")
-        global model
         model_name = os.environ['GPT_MODEL']
-        model = GPT4All(model_name)
+        model_thread.initModel(model_name,None)
         return True
     else:
         print("User is not verified")
     return False
     
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if model is None:
+    if not model_thread.isRunning:
         is_usr_verified(update)
-    if model is not None:
-        output = model.generate(update.message.text)
+    if model_thread.isRunning:
+        prompt_queue.put(update.message.text)
+        output = response_queue.get()
         await update.message.reply_text(output)
 
+model_thread.InitThread(prompt_queue, response_queue)
 app = ApplicationBuilder().token(os.environ['TGRAM_TOKEN']).build()
 
 
