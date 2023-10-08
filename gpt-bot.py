@@ -26,6 +26,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
     await update.message.reply_text("Hi, {user}!Please enter the password using /pswd command:")
 
+async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text("You can use the following commands: \n/role - to see the available roles and:\n/role rolename - to switch to it, then just make requests chatting without any commands")
+
 async def role(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.message.text == "/role":
         #just show the roles available
@@ -70,9 +73,8 @@ app = ApplicationBuilder().token(os.environ['TGRAM_TOKEN']).build()
 
 # on different commands - answer in Telegram
 app.add_handler(CommandHandler("start", start))
-
-# on different commands - answer in Telegram
 app.add_handler(CommandHandler("role", role))
+app.add_handler(CommandHandler("help", help))
 
 # on non command i.e message - echo the message on Telegram
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, chat))
