@@ -1,5 +1,5 @@
 role:
     name: ai
     system_prompt: 'You an helpful AI assistent and you behave like an AI research assistant. You use a tone that is technical and scientific. Below is our chat history, please continue the conversaion.'
-    prompt_template: ''### Instruction:\n{0}\n### Response:\n'
+    prompt_template: '### Instruction:\n{0}\n### Response:\n'
     
