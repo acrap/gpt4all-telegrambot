@@ -47,6 +47,13 @@ def load_role(role_name):
         data=yaml.load(file_object,Loader=yaml.SafeLoader)
     return data['role']
 
+async def reset(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    prompt_queue.put("/reset")
+    _role = load_role(role)
+    model_thread.changeRole(_role)
+    model_thread.startThread()
+    await update.message.reply_text("Chat history was cleaned")
+
 def is_usr_verified(update: Update):
     user = update.effective_user
     if user.id == int(os.environ['USER_ID']):
@@ -54,6 +61,7 @@ def is_usr_verified(update: Update):
         model_name = os.environ['GPT_MODEL']
         _role = load_role(role)
         model_thread.initModel(model_name,_role)
+        model_thread.startThread()
         return True
     else:
         print("User is not verified")
@@ -74,6 +82,7 @@ app = ApplicationBuilder().token(os.environ['TGRAM_TOKEN']).build()
 # on different commands - answer in Telegram
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("role", role))
+app.add_handler(CommandHandler("reset", reset))
 app.add_handler(CommandHandler("help", help))
 
 # on non command i.e message - echo the message on Telegram
