@@ -32,11 +32,13 @@ class ModelThread():
 
 # Object that signals shutdown
 _sentinel = object()
-    
+
+
 def worker(model, role, in_q, out_q):
     with model.chat_session(role['system_prompt'], role['prompt_template']):
         for data in iter(in_q.get, _sentinel):
             if data == "/reset":
                 break
             output = model.generate(data)
+            output = output.replace("\\n","\x0a")
             out_q.put(output)
