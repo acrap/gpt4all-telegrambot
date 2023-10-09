@@ -9,7 +9,7 @@ model_thread = ModelThread()
 prompt_queue=Queue()
 response_queue=Queue()
 roles_dir = "./roles"
-role = "default"
+current_role = "default"
 
 def list_roles():
     res = []
@@ -30,26 +30,33 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("You can use the following commands: \n/role - to see the available roles and:\n/role rolename - to switch to it, then just make requests chatting without any commands")
 
 async def role(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    global current_role
+    roles = list_roles()
     if update.message.text == "/role":
         #just show the roles available
         roles = list_roles()
         # using list comprehension
         rolesStr = ' '.join([str(elem) for elem in roles])
         await update.message.reply_text(rf"Here are the available roles(switch to it with `/role rolename`):{rolesStr}")
+        await update.message.reply_text(rf"Current role is: {current_role}")
     else:
         role_name = update.message.text.replace('/role ','')
-        if os.path.isfile(rf"{roles_dir}/{role_name}.role"):
-            global role
-            role = role_name
+        if os.path.isfile(rf"{roles_dir}/{role_name}.role"):          
+            current_role = role_name
+            await update.message.reply_text(rf"Role will be changed to {current_role}")
+        else:
+            await update.message.reply_text("No such role available")
 
 def load_role(role_name):
     with open(rf"{roles_dir}/{role_name}.role","r") as file_object:
         data=yaml.load(file_object,Loader=yaml.SafeLoader)
+    print(data)
     return data['role']
 
 async def reset(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    global current_role
     prompt_queue.put("/reset")
-    _role = load_role(role)
+    _role = load_role(current_role)
     model_thread.changeRole(_role)
     model_thread.startThread()
     await update.message.reply_text("Chat history was cleaned")
@@ -59,7 +66,7 @@ def is_usr_verified(update: Update):
     if user.id == int(os.environ['USER_ID']):
         print("User verified")
         model_name = os.environ['GPT_MODEL']
-        _role = load_role(role)
+        _role = load_role(current_role)
         model_thread.initModel(model_name,_role)
         model_thread.startThread()
         return True
